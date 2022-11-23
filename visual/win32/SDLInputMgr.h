@@ -63,6 +63,7 @@ public:
     std::vector<WORD> UppedKeys;
     std::vector<WORD> DownedKeys;
     std::vector<WORD> RepeatKeys;
+    bool IsMapped;
 };
 
 //---------------------------------------------------------------------------

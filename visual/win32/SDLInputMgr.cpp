@@ -37,6 +37,11 @@ tTVPSDLGameController::tTVPSDLGameController(SDL_GameController* aGameController
 
     LeftTrigger = 0.f;
     RightTrigger = 0.f;
+
+    char* mapping = SDL_GameControllerMappingForGUID(SDL_JoystickGetGUID(SDL_GameControllerGetJoystick(aGameController)));
+
+    IsMapped = NULL != mapping;
+
     Reset();
 }
 //---------------------------------------------------------------------------
@@ -84,15 +89,22 @@ void tTVPSDLGameController::HandleButton(SDL_ControllerButtonEvent& aEvent)
     auto buttonIndex = ConvertToIndex(aEvent.button);
     mCurrentButtons[buttonIndex] = aEvent.state == SDL_PRESSED ? true : false;
     //printf("%s %s\n", ConvertToString(aEvent.button), aEvent.state == SDL_PRESSED ? "Pressed" : "Released");
+    WORD tjsPadButton = ConvertToTjsPad(buttonIndex);
 
     if (mCurrentButtons[buttonIndex] && !mPreviousButtons[buttonIndex])
     {
-        DownedKeys.emplace_back(ConvertToTjsPad(buttonIndex));
+        if (std::find(DownedKeys.begin(), DownedKeys.end(), tjsPadButton) != DownedKeys.end())
+        {
+            DownedKeys.emplace_back(tjsPadButton);
+        }
         RepeatWait[buttonIndex].Time = GetTickCount64();
     }
     else if (!mCurrentButtons[buttonIndex] && mPreviousButtons[buttonIndex])
     {
-        UppedKeys.emplace_back(ConvertToTjsPad(buttonIndex));
+        if (std::find(UppedKeys.begin(), UppedKeys.end(), tjsPadButton) != UppedKeys.end())
+        {
+          UppedKeys.emplace_back(tjsPadButton);
+        }
         RepeatWait[buttonIndex].Time = 0;
         RepeatWait[buttonIndex].Interval = false;
     }
@@ -108,6 +120,13 @@ tTVPSDLSdlGameControllerMgr* tTVPSDLSdlGameControllerMgr::sInstance = NULL;
 tTVPSDLSdlGameControllerMgr::tTVPSDLSdlGameControllerMgr(HWND handle)
 {
     SDL_Init(SDL_INIT_GAMECONTROLLER);
+
+    SDL_RWops* file = SDL_RWFromFile("gamecontrollerdb.txt", "rb");
+    // If there was no local game controller DB, don't bother tryig to load it
+    if (NULL == file)
+    {
+      SDL_GameControllerAddMappingsFromRW(file, 1);
+    }
     sInstance = this;
 }
 //---------------------------------------------------------------------------
@@ -200,13 +219,23 @@ void tTVPSDLSdlGameControllerMgr::Update()
             }
             case SDL_CONTROLLERAXISMOTION:
             {
-                mControllers[event.caxis.which].HandleMotion(event.caxis);
+                tTVPSDLGameController& controller = mControllers[event.caxis.which];
+
+                if (controller.IsMapped)
+                {
+                    mControllers[event.caxis.which].HandleMotion(event.caxis);
+                }
                 break;
             }
             case SDL_CONTROLLERBUTTONDOWN:
             case SDL_CONTROLLERBUTTONUP:
             {
-                mControllers[event.cbutton.which].HandleButton(event.cbutton);
+                tTVPSDLGameController& controller = mControllers[event.caxis.which];
+
+                if (controller.IsMapped)
+                {
+                    mControllers[event.cbutton.which].HandleButton(event.cbutton);
+                }
                 break;
             }
         }
