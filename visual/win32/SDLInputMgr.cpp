@@ -119,6 +119,10 @@ tTVPSDLSdlGameControllerMgr* tTVPSDLSdlGameControllerMgr::sInstance = NULL;
 //---------------------------------------------------------------------------
 tTVPSDLSdlGameControllerMgr::tTVPSDLSdlGameControllerMgr(HWND handle)
 {
+    if (sInstance != NULL)
+    {
+        return;
+    }
     SDL_Init(SDL_INIT_GAMECONTROLLER);
 
     SDL_RWops* file = SDL_RWFromFile("gamecontrollerdb.txt", "rb");
@@ -137,8 +141,11 @@ tTVPSDLSdlGameControllerMgr::tTVPSDLSdlGameControllerMgr(HWND handle)
 //---------------------------------------------------------------------------
 tTVPSDLSdlGameControllerMgr::~tTVPSDLSdlGameControllerMgr()
 {
-    SDL_Quit();
-    sInstance = NULL;
+    if (this == sInstance)
+    {
+        SDL_Quit();
+        sInstance = NULL;
+    }
 }
 
 //---------------------------------------------------------------------------

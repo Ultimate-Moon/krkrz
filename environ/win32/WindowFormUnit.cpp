@@ -501,25 +501,28 @@ void TTVPWindowForm::TickBeat(){
 	if (SdlInputManager && TJSNativeInstance) {
 		SdlInputManager->Update();
 
-		auto it = tTVPSDLSdlGameControllerMgr::sInstance->mControllers.find(0);
-		if (it != tTVPSDLSdlGameControllerMgr::sInstance->mControllers.end())
+		if (tTVPSDLSdlGameControllerMgr::sInstance)
 		{
-			const std::vector<WORD>& uppedkeys = it->second.GetUppedKeys();
-			const std::vector<WORD>& downedkeys = it->second.GetDownedKeys();
-			const std::vector<WORD>& repeatkeys = it->second.GetRepeatKeys();
-			std::vector<WORD>::const_iterator i;
-			
-			// for upped pad buttons
-			for (i = uppedkeys.begin(); i != uppedkeys.end(); i++) {
-				InternalKeyUp(*i, shift);
-			}
-			// for downed pad buttons
-			for (i = downedkeys.begin(); i != downedkeys.end(); i++) {
-				InternalKeyDown(*i, shift);
-			}
-			// for repeated pad buttons
-			for (i = repeatkeys.begin(); i != repeatkeys.end(); i++) {
-				InternalKeyDown(*i, shift | TVP_SS_REPEAT);
+			auto it = tTVPSDLSdlGameControllerMgr::sInstance->mControllers.find(0);
+			if (it != tTVPSDLSdlGameControllerMgr::sInstance->mControllers.end())
+			{
+				const std::vector<WORD>& uppedkeys = it->second.GetUppedKeys();
+				const std::vector<WORD>& downedkeys = it->second.GetDownedKeys();
+				const std::vector<WORD>& repeatkeys = it->second.GetRepeatKeys();
+				std::vector<WORD>::const_iterator i;
+				
+				// for upped pad buttons
+				for (i = uppedkeys.begin(); i != uppedkeys.end(); i++) {
+					InternalKeyUp(*i, shift);
+				}
+				// for downed pad buttons
+				for (i = downedkeys.begin(); i != downedkeys.end(); i++) {
+					InternalKeyDown(*i, shift);
+				}
+				// for repeated pad buttons
+				for (i = repeatkeys.begin(); i != repeatkeys.end(); i++) {
+					InternalKeyDown(*i, shift | TVP_SS_REPEAT);
+				}
 			}
 		}
 	}
@@ -1543,7 +1546,7 @@ void TTVPWindowForm::CreateDirectInputDevice() {
 	if( !DIPadDevice ) DIPadDevice = new tTVPPadDirectInputDevice(GetHandle());
 #endif
 
-	if ( !SdlInputManager ) SdlInputManager = new tTVPSDLSdlGameControllerMgr(GetHandle());
+	if ( !SdlInputManager && (NULL == tTVPSDLSdlGameControllerMgr::sInstance) ) SdlInputManager = new tTVPSDLSdlGameControllerMgr(GetHandle());
 }
 void TTVPWindowForm::FreeDirectInputDevice() {
 	if( DIWheelDevice ) {
